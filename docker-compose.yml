@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  reclip:
+    image: python:3.10-bullseye
+    container_name: reclip
+    restart: always
+    working_dir: /app
+    ports:
+      - "8899:8899"
+    volumes:
+      - /volume1/docker/reclip:/app
+      - /volume1/docker/reclip/downloads:/app/downloads
+    environment:
+      - DISPLAY=:0
+      - TZ=Europe/Rome
+    command: >
+      sh -c "
+      apt-get update && apt-get install -y ffmpeg git &&
+      if [ ! -f /app/app.py ]; then
+        git clone https://github.com/averygan/reclip.git /tmp/reclip &&
+        cp -r /tmp/reclip/. /app/ &&
+        rm -rf /tmp/reclip;
+      fi &&
+      pip install --no-cache-dir yt-dlp flask requests flask-cors &&
+      sed -i 's/127.0.0.1/0.0.0.0/g' /app/app.py &&
+      sed -i \"s/app.run(port=8899)/app.run(host='0.0.0.0', port=8899)/g\" /app/app.py &&
+      python3 /app/app.py"
